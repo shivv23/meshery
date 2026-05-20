@@ -50,6 +50,14 @@ func writeJSONEmptyObject(w http.ResponseWriter, status int) {
 	httputil.WriteJSONEmptyObject(w, status)
 }
 
+func writeAPIResponse(w http.ResponseWriter, status int, data any) {
+	httputil.WriteAPIResponse(w, status, data)
+}
+
+func writeAPIListResponse(w http.ResponseWriter, status int, data any, page, pageSize, totalCount int) {
+	httputil.WriteAPIListResponse(w, status, data, page, pageSize, totalCount)
+}
+
 const (
 	defaultPageSize = 25
 	queryParamTrue  = "true"

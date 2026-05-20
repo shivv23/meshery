@@ -128,6 +128,77 @@ func WriteJSONMessage(w http.ResponseWriter, payload any, status int) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
+// ---------------------------------------------------------------------------
+// Unified API response envelope
+// ---------------------------------------------------------------------------
+//
+// These helpers standardize the JSON envelope for all Meshery REST API
+// responses. The envelope has two shapes:
+//
+// Single-resource response:
+//
+//	{
+//	  "data": { ... },   // the resource
+//	}
+//
+// Paginated list response:
+//
+//	{
+//	  "data": [ ... ],
+//	  "meta": {
+//	    "page":      1,
+//	    "pageSize":  25,
+//	    "totalCount": 142
+//	  }
+//	}
+//
+// Error responses use the existing error envelope (errorResponse above).
+
+// apiResponse is the standard success envelope for single-resource endpoints.
+type apiResponse struct {
+	Data any `json:"data"`
+}
+
+// apiListResponse is the standard success envelope for paginated list endpoints.
+type apiListResponse struct {
+	Data any          `json:"data"`
+	Meta *listMeta    `json:"meta,omitempty"`
+}
+
+type listMeta struct {
+	Page       int `json:"page"`
+	PageSize   int `json:"pageSize"`
+	TotalCount int `json:"totalCount"`
+}
+
+// WriteAPIResponse encodes data as the canonical single-resource response.
+// Status defaults to 200; pass any other HTTP status if needed.
+func WriteAPIResponse(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(apiResponse{Data: data})
+}
+
+// WriteAPIListResponse encodes data as the canonical paginated list response.
+// Pass page=0, pageSize=0, totalCount=0 to omit the meta block (for
+// non-paginated endpoints that still return a list under "data").
+func WriteAPIListResponse(w http.ResponseWriter, status int, data any, page, pageSize, totalCount int) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(status)
+
+	resp := apiListResponse{Data: data}
+	if page > 0 || pageSize > 0 || totalCount > 0 {
+		resp.Meta = &listMeta{
+			Page:       page,
+			PageSize:   pageSize,
+			TotalCount: totalCount,
+		}
+	}
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
 // WriteJSONEmptyObject writes "{}" with Content-Type: application/json.
 // Several handlers return an empty object to indicate "no data, but request
 // succeeded"; this helper centralizes the pattern and guarantees the header
