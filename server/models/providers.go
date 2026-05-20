@@ -313,6 +313,9 @@ const (
 	SystemIDKey              ContextKey = "systemidKey"
 	MesheryServerURL         ContextKey = "mesheryserverurl"
 	MesheryServerCallbackURL ContextKey = "mesheryservercallbackurl"
+
+	// RequestIDCtxKey is the context key for persisting the request ID to context
+	RequestIDCtxKey ContextKey = "request_id"
 )
 
 // IsSupported returns true if the given feature is listed as one of
